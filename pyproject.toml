@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "modelguard"
+version = "0.1.0"
+description = "A drop-in seat-belt library for machine-learning model files that prevents hidden malware and verifies provenance"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Kartik", email = "kartik@example.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "pydantic>=2.0.0",
+    "typer>=0.9.0",
+    "sigstore>=2.0.0",
+    "pyyaml>=6.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+torch = ["torch>=1.9.0"]
+tensorflow = ["tensorflow>=2.8.0"]
+sklearn = ["scikit-learn>=1.0.0"]
+onnx = ["onnx>=1.12.0", "onnxruntime>=1.12.0"]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+]
+
+[project.scripts]
+modelguard = "modelguard.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/example/modelguard"
+Documentation = "https://docs.modelguard.dev"
+Repository = "https://github.com/example/modelguard"
+Issues = "https://github.com/example/modelguard/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.mypy]
+strict = true
+python_version = "3.9"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+select = ["E", "F", "W", "C", "I", "N", "UP", "S", "B", "A", "C4", "ICN", "PIE", "T20", "RET", "SIM", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "NPY", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

@@ -1,0 +1,46 @@
+# Modelguard Policy Configuration Example
+# Copy this file to modelguard.yaml and customize as needed
+
+# Enforcement mode - when true, blocks unsafe models instead of just warning
+enforce: false
+
+# Signature verification settings
+require_signatures: false
+trusted_signers: []
+  # - "alice@company.com"
+  # - "bob@company.com"
+  # - "security-team@company.com"
+
+# Allow unsigned models when signatures are not required
+allow_unsigned: true
+
+# Scan models for malicious content on load
+scan_on_load: true
+
+# Maximum model file size in megabytes
+max_file_size_mb: 1000
+
+# Timeout for operations in seconds
+timeout_seconds: 30
+
+# Example configurations for different environments:
+
+# Development (permissive)
+# enforce: false
+# require_signatures: false
+# scan_on_load: true
+
+# Staging (moderate security)
+# enforce: true
+# require_signatures: false
+# scan_on_load: true
+# max_file_size_mb: 500
+
+# Production (strict security)
+# enforce: true
+# require_signatures: true
+# trusted_signers:
+#   - "ml-team@company.com"
+#   - "security@company.com"
+# scan_on_load: true
+# max_file_size_mb: 200
