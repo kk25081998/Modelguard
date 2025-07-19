@@ -89,14 +89,29 @@ class TestOpcodeAnalysis:
     
     def test_analyze_dangerous_opcodes(self):
         """Test analysis of dangerous pickle opcodes."""
-        # This creates pickle with GLOBAL opcode
-        malicious_pickle = b'\x80\x03c__builtin__\neval\nq\x00X\x0e\x00\x00\x00print("test")q\x01\x85q\x02Rq\x03.'
+        # Create a proper malicious pickle with GLOBAL opcode
+        import pickle
+        import io
+        
+        # Create pickle data that uses GLOBAL opcode
+        buffer = io.BytesIO()
+        pickler = pickle.Pickler(buffer)
+        
+        # This will create a pickle with GLOBAL opcode for eval function
+        try:
+            pickler.dump(eval)  # This creates GLOBAL opcode
+            malicious_pickle = buffer.getvalue()
+        except:
+            # Fallback: create minimal pickle with GLOBAL manually
+            malicious_pickle = b'\x80\x03c__builtin__\neval\nq\x00.'
         
         analysis = analyze_pickle_opcodes(malicious_pickle)
         
         assert not analysis["is_safe"]
         assert len(analysis["dangerous_opcodes"]) > 0
-        assert analysis["dangerous_opcodes"][0]["opcode"] == "GLOBAL"
+        # Should find either GLOBAL or STACK_GLOBAL (both are dangerous)
+        dangerous_opcode = analysis["dangerous_opcodes"][0]["opcode"]
+        assert dangerous_opcode in ["GLOBAL", "STACK_GLOBAL"]
     
     def test_analyze_invalid_pickle(self):
         """Test analysis of invalid pickle data."""

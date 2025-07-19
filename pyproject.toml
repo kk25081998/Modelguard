@@ -7,14 +7,13 @@ name = "modelguard"
 version = "0.1.0"
 description = "A drop-in seat-belt library for machine-learning model files that prevents hidden malware and verifies provenance"
 readme = "README.md"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 authors = [
-    {name = "Kartik", email = "kartik@example.com"}
+    {name = "Kartik Khosa", email = "kartik.khosa@gmail.com"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -49,10 +48,7 @@ dev = [
 modelguard = "modelguard.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/example/modelguard"
-Documentation = "https://docs.modelguard.dev"
-Repository = "https://github.com/example/modelguard"
-Issues = "https://github.com/example/modelguard/issues"
+Homepage = "https://github.com/kk25081998/Modelguard"
 
 [tool.setuptools.packages.find]
 where = ["src"]

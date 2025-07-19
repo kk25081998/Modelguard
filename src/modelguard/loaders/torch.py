@@ -1,21 +1,59 @@
 """Safe PyTorch model loading."""
 
-from pathlib import Path
-from typing import Any, Optional, Dict
 import pickle
-import io
+from pathlib import Path
+from typing import Any
 
-from ..core.exceptions import MaliciousModelError, SignatureError, PolicyError
+from ..core.exceptions import MaliciousModelError, PolicyError, SignatureError
+from ..core.logging import get_logger
+from ..core.policy import load_policy
 from ..core.scanner import ModelScanner
 from ..core.signature import SignatureManager
-from ..core.policy import load_policy
+
+logger = get_logger("torch")
+
+
+def _verify_signature(path: Path, policy) -> None:
+    """Verify model signature."""
+    sig_manager = SignatureManager()
+    if not sig_manager.has_signature(path):
+        msg = f"Model signature required but not found: {path}"
+        raise SignatureError(msg)
+
+    verification = sig_manager.verify_signature(path)
+    if not verification["verified"]:
+        error = verification.get('error')
+        msg = f"Signature verification failed: {error}"
+        raise SignatureError(msg)
+
+    # Check if signer is trusted
+    signer = verification.get("signer", {}).get("identity", "unknown")
+    if not policy.is_signer_trusted(signer):
+        msg = f"Untrusted signer: {signer}"
+        raise SignatureError(msg)
+
+
+def _scan_for_threats(path: Path, policy) -> None:
+    """Scan model for malicious content."""
+    scanner = ModelScanner()
+    result = scanner.scan_file(path)
+
+    if not result.is_safe:
+        if policy.should_enforce():
+            threats = "; ".join(result.threats) if result.threats else "Unknown threats"
+            msg = f"Malicious content detected in {path}: {threats}"
+            raise MaliciousModelError(msg)
+        # Log warning but continue
+        logger.warning("Potential threats detected in %s: %s", path, result.threats)
 
 
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe operations."""
-    
+
     def __init__(self, file, *, fix_imports=True, encoding="ASCII", errors="strict"):
-        super().__init__(file, fix_imports=fix_imports, encoding=encoding, errors=errors)
+        super().__init__(
+            file, fix_imports=fix_imports, encoding=encoding, errors=errors
+        )
         self.safe_globals = {
             # PyTorch classes
             'torch._utils._rebuild_tensor_v2',
@@ -27,19 +65,19 @@ class RestrictedUnpickler(pickle.Unpickler):
             'torch.device',
             'torch.storage._TypedStorage',
             'torch.storage._UntypedStorage',
-            
+
             # Collections
             'collections.OrderedDict',
             'collections.defaultdict',
             'collections.Counter',
             'collections.deque',
-            
+
             # NumPy
             'numpy.ndarray',
             'numpy.dtype',
             'numpy.core.multiarray._reconstruct',
             'numpy.core.multiarray.scalar',
-            
+
             # Built-ins
             'builtins.list',
             'builtins.tuple',
@@ -47,24 +85,25 @@ class RestrictedUnpickler(pickle.Unpickler):
             'builtins.set',
             'builtins.frozenset',
         }
-    
+
     def find_class(self, module, name):
         """Override to restrict class loading."""
         full_name = f"{module}.{name}"
-        
+
         if full_name in self.safe_globals:
             return super().find_class(module, name)
-        
+
         # Allow some common safe modules
         safe_modules = ['torch', 'numpy', 'collections', 'builtins']
         if any(module.startswith(safe_mod) for safe_mod in safe_modules):
             # Additional checks could be added here
             return super().find_class(module, name)
-        
-        raise MaliciousModelError(f"Attempted to load unsafe class: {full_name}")
+
+        msg = f"Attempted to load unsafe class: {full_name}"
+        raise MaliciousModelError(msg)
 
 
-def safe_load(path: str | Path, map_location=None, pickle_module=None, **kwargs) -> Any:
+def safe_load(path: str | Path, map_location=None, **kwargs) -> Any:
     """
     Safely load a PyTorch model with security checks.
     
@@ -84,54 +123,36 @@ def safe_load(path: str | Path, map_location=None, pickle_module=None, **kwargs)
     """
     path = Path(path)
     policy = load_policy()
-    
+
     # Check file size
     if path.stat().st_size > policy.get_max_file_size():
-        raise PolicyError(f"Model file too large: {path.stat().st_size} bytes")
-    
+        msg = f"Model file too large: {path.stat().st_size} bytes"
+        raise PolicyError(msg)
+
     # Signature verification
     if policy.requires_signatures():
-        sig_manager = SignatureManager()
-        if not sig_manager.has_signature(path):
-            raise SignatureError(f"Model signature required but not found: {path}")
-        
-        verification = sig_manager.verify_signature(path)
-        if not verification["verified"]:
-            raise SignatureError(f"Signature verification failed: {verification.get('error')}")
-        
-        # Check if signer is trusted
-        signer = verification.get("signer", {}).get("identity", "unknown")
-        if not policy.is_signer_trusted(signer):
-            raise SignatureError(f"Untrusted signer: {signer}")
-    
+        _verify_signature(path, policy)
+
     # Scan for malicious content
     if policy.should_scan():
-        scanner = ModelScanner()
-        result = scanner.scan_file(path)
-        
-        if not result.is_safe:
-            if policy.should_enforce():
-                threats = "; ".join(result.threats) if result.threats else "Unknown threats"
-                raise MaliciousModelError(f"Malicious content detected in {path}: {threats}")
-            else:
-                # Log warning but continue
-                print(f"Warning: Potential threats detected in {path}: {result.threats}")
-    
+        _scan_for_threats(path, policy)
+
     # Load with restricted unpickler
     try:
-        with open(path, 'rb') as f:
+        with path.open('rb') as f:
             unpickler = RestrictedUnpickler(f)
             return unpickler.load()
     except Exception as e:
         if policy.should_enforce():
-            raise MaliciousModelError(f"Failed to load model safely: {e}")
-        else:
-            # Fallback to standard torch.load if available
-            try:
-                import torch
-                return torch.load(path, map_location=map_location, **kwargs)
-            except ImportError:
-                raise MaliciousModelError(f"PyTorch not available and safe loading failed: {e}")
+            msg = f"Failed to load model safely: {e}"
+            raise MaliciousModelError(msg) from e
+        # Fallback to standard torch.load if available
+        try:
+            import torch
+            return torch.load(path, map_location=map_location, **kwargs)
+        except ImportError:
+            msg = f"PyTorch not available and safe loading failed: {e}"
+            raise MaliciousModelError(msg) from e
 
 
 def load(*args, **kwargs) -> Any:
