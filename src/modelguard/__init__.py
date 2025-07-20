@@ -11,7 +11,7 @@ from .core.policy import Policy, load_policy
 from .core.scanner import ModelScanner
 from .loaders import onnx, sklearn, tensorflow, torch
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "MaliciousModelError",
     "ModelGuardError",
