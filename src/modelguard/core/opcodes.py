@@ -228,9 +228,8 @@ def analyze_pickle_opcodes(data: bytes) -> dict[str, Any]:
     # 2. Potentially dangerous opcodes are used with unsafe imports
     dangerous_opcodes = always_dangerous_found.copy()
     
-    # Only add potentially dangerous opcodes if they're used with unsafe imports
-    if unsafe_imports:
-        dangerous_opcodes.extend(potentially_dangerous_found)
+    # Don't flag potentially dangerous opcodes if all imports are safe
+    # The presence of GLOBAL/REDUCE with safe imports is normal for ML models
 
     is_safe = (
         len(always_dangerous_found) == 0 and
@@ -267,16 +266,39 @@ def _is_safe_import(import_name: str) -> bool:
         if pattern in import_name:
             return False
     
+    # Dangerous builtins that can execute code
+    dangerous_builtins = [
+        "builtins.eval", "builtins.exec", "builtins.compile",
+        "builtins.__import__", "builtins.open", "builtins.input",
+        "builtins.print",  # Can be used maliciously in __reduce__
+        "builtins.getattr", "builtins.setattr", "builtins.delattr",
+        "builtins.hasattr", "builtins.callable"
+    ]
+    
+    if import_name in dangerous_builtins:
+        return False
+    
     # Known safe patterns for ML
     safe_patterns = [
         "numpy.", "torch.", "sklearn.", "tensorflow.",
-        "collections.", "builtins.", "joblib.",
+        "collections.", "joblib.",
         "_pickle.", "copyreg.", "functools."
     ]
     
     for pattern in safe_patterns:
         if import_name.startswith(pattern):
             return True
+    
+    # Safe builtins for data types only
+    safe_builtins = [
+        "builtins.list", "builtins.tuple", "builtins.dict", 
+        "builtins.set", "builtins.frozenset", "builtins.str",
+        "builtins.int", "builtins.float", "builtins.bool",
+        "builtins.bytes", "builtins.bytearray", "builtins.complex"
+    ]
+    
+    if import_name in safe_builtins:
+        return True
     
     # Handle attribute access patterns (like "coef_.dtype")
     # These are usually safe as they're just accessing object attributes
