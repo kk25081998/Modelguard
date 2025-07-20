@@ -31,7 +31,9 @@ class SignatureManager:
             Path to signature file
         """
         if not SIGSTORE_AVAILABLE:
-            raise SignatureError("Sigstore not available. Install with: pip install sigstore")
+            raise SignatureError(
+                "Sigstore not available. Install with: pip install sigstore"
+            )
 
         if not model_path.exists():
             raise SignatureError(f"Model file not found: {model_path}")

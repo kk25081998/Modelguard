@@ -2,7 +2,7 @@
 
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from .exceptions import UnsupportedFormatError
 from .opcodes import analyze_pickle_opcodes
@@ -11,13 +11,13 @@ from .opcodes import analyze_pickle_opcodes
 class ScanResult:
     """Result of a model scan."""
 
-    def __init__(self, path: Path, is_safe: bool, details: Dict[str, Any]):
+    def __init__(self, path: Path, is_safe: bool, details: dict[str, Any]):
         self.path = path
         self.is_safe = is_safe
         self.details = details
-        self.threats: List[str] = details.get("threats", [])
+        self.threats: list[str] = details.get("threats", [])
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "path": str(self.path),
@@ -97,7 +97,9 @@ class ModelScanner:
                 # Might be a ZIP archive (PyTorch .pth files)
                 if zipfile.is_zipfile(path):
                     return self._scan_zip_archive(path)
-                return ScanResult(path, False, {"error": "Not valid pickle or ZIP data"})
+                return ScanResult(
+                    path, False, {"error": "Not valid pickle or ZIP data"}
+                )
 
             # Analyze pickle opcodes
             analysis = analyze_pickle_opcodes(data)
@@ -163,7 +165,9 @@ class ModelScanner:
             return ScanResult(path, is_safe, details)
 
         except Exception as e:
-            return ScanResult(path, False, {"error": f"Failed to scan ZIP archive: {e}"})
+            return ScanResult(
+                path, False, {"error": f"Failed to scan ZIP archive: {e}"}
+            )
 
     def _scan_hdf5(self, path: Path) -> ScanResult:
         """Scan HDF5-based model files (TensorFlow/Keras)."""
@@ -205,7 +209,7 @@ class ModelScanner:
             data.startswith(b'}')     # Dict start
         )
 
-    def scan_directory(self, path: Path, recursive: bool = True) -> List[ScanResult]:
+    def scan_directory(self, path: Path, recursive: bool = True) -> list[ScanResult]:
         """
         Scan all model files in a directory.
         
@@ -224,7 +228,10 @@ class ModelScanner:
         pattern = "**/*" if recursive else "*"
 
         for file_path in path.glob(pattern):
-            if file_path.is_file() and file_path.suffix.lower() in self.supported_extensions:
+            if (
+                file_path.is_file()
+                and file_path.suffix.lower() in self.supported_extensions
+            ):
                 result = self.scan_file(file_path)
                 results.append(result)
 

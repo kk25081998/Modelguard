@@ -2,15 +2,16 @@
 
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import typer
+import yaml
 from rich import print as rprint
 from rich.console import Console
 from rich.table import Table
 
 from .core.exceptions import ModelGuardError
-from .core.policy import Policy, PolicyConfig
+from .core.policy import Policy, PolicyConfig, load_policy
 from .core.scanner import ModelScanner
 from .core.signature import SignatureManager
 
@@ -24,10 +25,18 @@ console = Console()
 
 @app.command()
 def scan(
-    paths: List[Path] = typer.Argument(..., help="Paths to model files or directories"),
-    format: str = typer.Option("table", "--format", "-f", help="Output format: table, json"),
-    recursive: bool = typer.Option(True, "--recursive/--no-recursive", "-r", help="Scan directories recursively"),
-    exit_on_threat: bool = typer.Option(True, "--exit-on-threat/--no-exit", help="Exit with code 1 if threats found")
+    paths: list[Path] = typer.Argument(
+        ..., help="Paths to model files or directories"
+    ),
+    format: str = typer.Option(
+        "table", "--format", "-f", help="Output format: table, json"
+    ),
+    recursive: bool = typer.Option(
+        True, "--recursive/--no-recursive", "-r", help="Scan directories recursively"
+    ),
+    exit_on_threat: bool = typer.Option(
+        True, "--exit-on-threat/--no-exit", help="Exit with code 1 if threats found"
+    ),
 ):
     """Scan model files for malicious content."""
     scanner = ModelScanner()
@@ -68,8 +77,12 @@ def scan(
 @app.command()
 def sign(
     path: Path = typer.Argument(..., help="Path to model file to sign"),
-    identity: Optional[str] = typer.Option(None, "--identity", "-i", help="Signer identity (email)"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output signature file path")
+    identity: Optional[str] = typer.Option(
+        None, "--identity", "-i", help="Signer identity (email)"
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output signature file path"
+    ),
 ):
     """Sign a model file using Sigstore."""
     if not path.exists():
@@ -96,7 +109,9 @@ def sign(
 @app.command()
 def verify(
     path: Path = typer.Argument(..., help="Path to model file to verify"),
-    signature: Optional[Path] = typer.Option(None, "--signature", "-s", help="Path to signature file")
+    signature: Optional[Path] = typer.Option(
+        None, "--signature", "-s", help="Path to signature file"
+    ),
 ):
     """Verify a model file's signature."""
     if not path.exists():
@@ -126,7 +141,9 @@ def verify(
 @app.command()
 def policy(
     action: str = typer.Argument(..., help="Action: init, show, validate"),
-    path: Optional[Path] = typer.Option(None, "--path", "-p", help="Path to policy file")
+    path: Optional[Path] = typer.Option(
+        None, "--path", "-p", help="Path to policy file"
+    ),
 ):
     """Manage modelguard policies."""
     if action == "init":
@@ -152,7 +169,9 @@ def _display_scan_table(results):
     for result in results:
         status = "[green]✓ Safe[/green]" if result.is_safe else "[red]✗ Unsafe[/red]"
         threats = "; ".join(result.threats) if result.threats else "-"
-        details = result.details.get("error", "") or f"{result.details.get('total_opcodes', 0)} opcodes"
+        details = result.details.get("error", "") or (
+            f"{result.details.get('total_opcodes', 0)} opcodes"
+        )
 
         table.add_row(
             str(result.path),
@@ -171,7 +190,10 @@ def _display_scan_table(results):
         rprint(f"\n[green]✓ All {total_count} files are safe[/green]")
     else:
         unsafe_count = total_count - safe_count
-        rprint(f"\n[yellow]⚠ {unsafe_count} of {total_count} files have potential threats[/yellow]")
+        rprint(
+            f"\n[yellow]⚠ {unsafe_count} of {total_count} files have potential "
+            f"threats[/yellow]"
+        )
 
 
 def _init_policy(path: Optional[Path]):
@@ -197,8 +219,7 @@ def _init_policy(path: Optional[Path]):
         "timeout_seconds": default_config.timeout_seconds,
     }
 
-    import yaml
-    with open(path, 'w') as f:
+    with path.open('w') as f:
         yaml.dump(policy_data, f, default_flow_style=False)
 
     rprint(f"[green]✓ Policy file created: {path}[/green]")
@@ -213,7 +234,6 @@ def _show_policy(path: Optional[Path]):
         policy = Policy.from_file(path)
         rprint(f"Policy from: {path}")
     else:
-        from .core.policy import load_policy
         policy = load_policy()
         rprint("Current effective policy:")
 
@@ -250,10 +270,16 @@ def _validate_policy(path: Optional[Path]):
         # Show any warnings
         config = policy.config
         if config.require_signatures and not config.trusted_signers:
-            rprint("[yellow]⚠ Warning: require_signatures is true but no trusted_signers specified[/yellow]")
+            rprint(
+                "[yellow]⚠ Warning: require_signatures is true but no "
+                "trusted_signers specified[/yellow]"
+            )
 
         if not config.enforce and config.require_signatures:
-            rprint("[yellow]⚠ Warning: require_signatures is true but enforce is false[/yellow]")
+            rprint(
+                "[yellow]⚠ Warning: require_signatures is true but enforce is "
+                "false[/yellow]"
+            )
 
     except Exception as e:
         rprint(f"[red]✗ Policy file is invalid: {e}[/red]")

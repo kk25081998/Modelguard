@@ -1,9 +1,10 @@
 """Pickle opcode allow-list and analysis."""
 
-from typing import Any, Dict, Set
+import pickletools
+from typing import Any
 
 # Safe pickle opcodes that don't execute arbitrary code
-SAFE_OPCODES: Set[str] = {
+SAFE_OPCODES: set[str] = {
     # Basic data types
     "NONE",
     "NEWTRUE",
@@ -72,7 +73,7 @@ SAFE_OPCODES: Set[str] = {
 }
 
 # Dangerous opcodes that can execute arbitrary code
-DANGEROUS_OPCODES: Set[str] = {
+DANGEROUS_OPCODES: set[str] = {
     "GLOBAL",      # Import and call arbitrary functions
     "REDUCE",      # Call arbitrary callables
     "STACK_GLOBAL", # Import from stack
@@ -80,7 +81,7 @@ DANGEROUS_OPCODES: Set[str] = {
 }
 
 # Classes that are safe to instantiate
-SAFE_CLASSES: Set[str] = {
+SAFE_CLASSES: set[str] = {
     "builtins.list",
     "builtins.tuple",
     "builtins.dict",
@@ -103,7 +104,7 @@ SAFE_CLASSES: Set[str] = {
 }
 
 
-def analyze_pickle_opcodes(data: bytes) -> Dict[str, Any]:
+def analyze_pickle_opcodes(data: bytes) -> dict[str, Any]:
     """
     Analyze pickle data for dangerous opcodes.
     
@@ -113,8 +114,6 @@ def analyze_pickle_opcodes(data: bytes) -> Dict[str, Any]:
     Returns:
         Dictionary with analysis results
     """
-    import pickletools
-
     opcodes_found = set()
     dangerous_found = []
     global_imports = []

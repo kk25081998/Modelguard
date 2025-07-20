@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import yaml
 from pydantic import BaseModel, Field
@@ -12,12 +12,24 @@ class PolicyConfig(BaseModel):
     """Policy configuration model."""
 
     enforce: bool = Field(default=False, description="Enable enforcement mode")
-    require_signatures: bool = Field(default=False, description="Require valid signatures")
-    trusted_signers: List[str] = Field(default_factory=list, description="List of trusted signer identities")
-    allow_unsigned: bool = Field(default=True, description="Allow unsigned models when signatures not required")
-    scan_on_load: bool = Field(default=True, description="Scan models for malicious content on load")
-    max_file_size_mb: int = Field(default=1000, description="Maximum model file size in MB")
-    timeout_seconds: int = Field(default=30, description="Timeout for operations in seconds")
+    require_signatures: bool = Field(
+        default=False, description="Require valid signatures"
+    )
+    trusted_signers: list[str] = Field(
+        default_factory=list, description="List of trusted signer identities"
+    )
+    allow_unsigned: bool = Field(
+        default=True, description="Allow unsigned models when signatures not required"
+    )
+    scan_on_load: bool = Field(
+        default=True, description="Scan models for malicious content on load"
+    )
+    max_file_size_mb: int = Field(
+        default=1000, description="Maximum model file size in MB"
+    )
+    timeout_seconds: int = Field(
+        default=30, description="Timeout for operations in seconds"
+    )
 
     model_config = {"extra": "forbid"}
 
@@ -59,12 +71,18 @@ class Policy:
         for env_var, config_key in env_mapping.items():
             value = os.getenv(env_var)
             if value is not None:
-                if config_key in ["enforce", "require_signatures", "allow_unsigned", "scan_on_load"]:
-                    config_data[config_key] = value.lower() in ("true", "1", "yes", "on")
+                if config_key in [
+                    "enforce", "require_signatures", "allow_unsigned", "scan_on_load"
+                ]:
+                    config_data[config_key] = value.lower() in (
+                        "true", "1", "yes", "on"
+                    )
                 elif config_key in ["max_file_size_mb", "timeout_seconds"]:
                     config_data[config_key] = int(value)
                 elif config_key == "trusted_signers":
-                    config_data[config_key] = [s.strip() for s in value.split(",") if s.strip()]
+                    config_data[config_key] = [
+                        s.strip() for s in value.split(",") if s.strip()
+                    ]
                 else:
                     config_data[config_key] = value
 

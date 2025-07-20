@@ -48,7 +48,9 @@ def patched() -> Generator[None, None, None]:
             from .loaders.tensorflow import safe_load as tf_safe_load
 
             if hasattr(tf.keras.models, 'load_model'):
-                original_loaders['tf.keras.models.load_model'] = tf.keras.models.load_model
+                original_loaders['tf.keras.models.load_model'] = (
+                    tf.keras.models.load_model
+                )
                 tf.keras.models.load_model = tf_safe_load
 
         # Patch ONNX
