@@ -1,6 +1,6 @@
 # ModelGuard 🛡️
 
-[![PyPI version](https://badge.fury.io/py/modelguard.svg)](https://badge.fury.io/py/modelguard)
+[![PyPI version](https://badge.fury.io/py/ml-modelguard.svg)](https://badge.fury.io/py/ml-modelguard)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Tests](https://img.shields.io/badge/tests-54%2F54%20passing-brightgreen.svg)](https://github.com/kk25081998/Modelguard)
@@ -31,7 +31,7 @@ ModelGuard provides comprehensive ML model security with:
 ### Installation
 
 ```bash
-pip install modelguard
+pip install ml-modelguard
 ```
 
 ### Basic Usage
@@ -225,16 +225,44 @@ pytest tests/test_performance.py # Performance benchmarks
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Here's how to get started:
 
 ### Development Setup
 
-```bash
-git clone https://github.com/kk25081998/Modelguard.git
-cd Modelguard
-pip install -e ".[dev]"
-pytest tests/
-```
+1. **Fork and Clone**
+
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/Modelguard.git
+   cd Modelguard
+   ```
+
+2. **Install Development Dependencies**
+
+   ```bash
+   pip install -e ".[dev]"
+   ```
+
+3. **Run Tests**
+
+   ```bash
+   pytest tests/
+   ```
+
+4. **Code Quality Checks**
+   ```bash
+   ruff check src/ tests/
+   mypy src/
+   ```
+
+### What We Need Help With
+
+- 🐛 **Bug Reports**: Found an issue? Open an issue with details
+- 🚀 **New Features**: Ideas for improving ML security
+- 📚 **Documentation**: Help improve our docs and examples
+- 🧪 **Testing**: More test cases and edge case coverage
+- 🔧 **Framework Support**: Additional ML framework integrations
+
+See our [Contributing Guide](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 
@@ -242,7 +270,7 @@ ModelGuard is licensed under the [Apache License 2.0](LICENSE).
 
 ## 🔗 Links
 
-- **PyPI**: https://pypi.org/project/modelguard/
+- **PyPI**: https://pypi.org/project/ml-modelguard/
 - **Documentation**: https://github.com/kk25081998/Modelguard
 - **Issues**: https://github.com/kk25081998/Modelguard/issues
 - **Security**: Report security issues to security@modelguard.dev

@@ -3,11 +3,11 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "modelguard"
+name = "ml-modelguard"
 version = "0.1.0"
 description = "A drop-in seat-belt library for machine-learning model files that prevents hidden malware and verifies provenance"
 readme = "README.md"
-license = "Apache-2.0"
+
 authors = [
     {name = "Kartik Khosa", email = "kartik.khosa@gmail.com"}
 ]
@@ -55,6 +55,9 @@ where = ["src"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+[tool.setuptools]
+license-files = []
 
 [tool.mypy]
 strict = true
