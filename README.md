@@ -273,7 +273,6 @@ ModelGuard is licensed under the [Apache License 2.0](LICENSE).
 - **PyPI**: https://pypi.org/project/ml-modelguard/
 - **Documentation**: https://github.com/kk25081998/Modelguard
 - **Issues**: https://github.com/kk25081998/Modelguard/issues
-- **Security**: Report security issues to security@modelguard.dev
 
 ## 🙏 Acknowledgments
 
